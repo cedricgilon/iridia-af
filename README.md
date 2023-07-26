@@ -1,7 +1,6 @@
 # IRIDIA-AF
 
-A large publicly available paroxysmal atrial fibrillation long-term electrocardiogram monitoring database
-
+A large paroxysmal atrial fibrillation long-term electrocardiogram monitoring database
 ## Authors
 
 - Cédric GILON (1)
@@ -15,13 +14,12 @@ A large publicly available paroxysmal atrial fibrillation long-term electrocardi
 
 ## Abstract
 
-Atrial fibrillation is the most common sustained heart arrhythmia in adults. 
-Holter monitoring, a long term 2-lead electrocardiogram, is a key tool available to cardiologists for AF diagnosis. 
-Machine learning (ML) and deep learning (DL) models have showed great capacity to automatically detect AF in ECG and their use as medical decision support tool is growing. 
-The development and training of these models relies on the use of publicly available large annotated databases, that are limited, particularly in the case of public databases. 
-In this study, we present a new Holter monitoring database from patients with paroxysmal atrial fibrillation.
-The database contains 167 records from 152 patients, acquired from an outpatient cardiology clinic from 2006 to 2017 in Belgium.
-The records last from 19 hours up to 96 hours, divided into 24-hour files. 
-In total, it represents 24 million seconds of annotated Holter monitoring, sampled at 200 Hz. 
-All the AF episodes were manually annotated and reviewed by an expert cardiologist and a specialist cardiac nurse. 
-This dataset aims at expanding the available options for researchers working on AF detection
+Atrial fibrillation (AF) is the most common sustained heart arrhythmia in adults. 
+Holter monitoring, a long-term 2-lead electrocardiogram (ECG), is a key tool available to cardiologists for AF diagnosis. 
+Machine learning (ML) and deep learning (DL) models have shown great capacity to automatically detect AF in ECG and their use as medical decision support tool is growing.
+Training these models rely on a few open and annotated databases. 
+We present a new Holter monitoring database from patients with paroxysmal AF with 167 records from 152 patients, acquired from an outpatient cardiology clinic from 2006 to 2017 in Belgium. 
+AF episodes were manually annotated and reviewed by an expert cardiologist and a specialist cardiac nurse.
+Records last from 19 hours up to 95 hours, divided into 24-hour files.
+In total, it represents 24 million seconds of annotated Holter monitoring, sampled at 200 Hz.
+This dataset aims at expanding the available options for researchers and offers a valuable resource for advancing ML and DL use in the field of cardiac arrhythmia diagnosis.
