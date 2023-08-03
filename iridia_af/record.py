@@ -37,7 +37,7 @@ class Record:
         self.ecg_labels_df = None
         self.ecg_labels = None
 
-    def load_rr_record(self):
+    def load_rr(self):
         self.rr = [self.__read_rr_file(rr_file) for rr_file in self.rr_files]
         self.__create_rr_labels()
 

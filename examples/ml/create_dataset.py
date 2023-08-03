@@ -32,7 +32,7 @@ def get_record_windows(record_id, metadata_df):
     metadata_record = metadata_record.values[0]
     record_path = Path(hp.RECORDS_PATH, record_id)
     record = Record(record_path, metadata_record)
-    record.load_rr_record()
+    record.load_rr()
     record_windows = []
     for day_index in range(record.num_days):
         for i in range(0, len(record.rr[day_index]) - cfg.WINDOW_SIZE, cfg.TRAINING_STEP):
