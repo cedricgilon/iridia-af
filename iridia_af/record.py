@@ -224,6 +224,7 @@ class Record:
 
 @dataclass
 class RecordMetadata:
+    hospital_id: str
     patient_id: str
     patient_sex: str
     patient_age: int
@@ -235,6 +236,7 @@ class RecordMetadata:
     record_n_files: int
     record_n_seconds: int
     record_n_samples: int
+    type: str
 
 
 @dataclass
