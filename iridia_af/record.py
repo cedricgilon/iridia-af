@@ -1,11 +1,12 @@
-from dataclasses import dataclass
-from pathlib import Path
-
 import h5py
 import hrvanalysis as hrv
 import numpy as np
 import pandas as pd
+from dataclasses import dataclass
 from matplotlib import pyplot as plt
+from pathlib import Path
+
+from .record_dto import RecordMetadata, RREvent
 
 
 def create_record(record_id, metadata_df, record_path):
@@ -135,24 +136,25 @@ class Record:
 
     def load_ecg(self, clean_front=False):
         ecg_files = sorted(self.record_folder.glob("*_ecg_*.h5"))
-        self.ecg = [self.__read_ecg_file(ecg_file, clean_front) for ecg_file in ecg_files]
-        self.__create_ecg_labels(clean_front)
+        self.ecg = [self.__read_ecg_file(ecg_file) for ecg_file in ecg_files]
+        self.__create_ecg_labels()
+        if clean_front:
+            self.ecg = [ecg[6000:] for ecg in self.ecg]
+            self.ecg_labels = [ecg_label[6000:] for ecg_label in self.ecg_labels]
 
-    def __read_ecg_file(self, ecg_file: Path, clean_front=False) -> np.ndarray:
+    def __read_ecg_file(self, ecg_file: Path) -> np.ndarray:
         with h5py.File(ecg_file, "r") as f:
             key = list(f.keys())[0]
             ecg = f[key][:]
-            if clean_front:
-                ecg = ecg[6000:]
         return ecg
 
-    def __read_ecg_labels(self) -> pd.DataFrame:
+    def read_ecg_labels(self) -> pd.DataFrame:
         ecg_labels = sorted(self.record_folder.glob("*ecg_labels.csv"))
-        df_ecg_labels = pd.read_csv(ecg_labels[0])
-        return df_ecg_labels
+        assert len(ecg_labels) == 1
+        self.ecg_labels_df = pd.read_csv(ecg_labels[0])
 
-    def __create_ecg_labels(self, clean_front=False):
-        self.ecg_labels_df = self.__read_ecg_labels()
+    def __create_ecg_labels(self):
+        self.read_ecg_labels()
         len_ecg = [len(ecg) for ecg in self.ecg]
 
         start_day = self.ecg_labels_df["start_file_index"].unique()
@@ -171,8 +173,6 @@ class Record:
                 if row.end_file_index - row.end_file_index > 1:
                     for day in range(row.start_file_index + 1, row.end_file_index):
                         labels[day][:] = 1
-        if clean_front:
-            labels = [label[6000:] for label in labels]
         self.ecg_labels = labels
 
     def plot_ecg(self, has_day_ticks=True):
@@ -220,45 +220,3 @@ class Record:
 
         assert num_episodes_rr == num_episodes_ecg
         return num_episodes_rr
-
-
-@dataclass
-class RecordMetadata:
-    hospital_id: str
-    patient_id: str
-    patient_sex: str
-    patient_age: int
-    record_id: str
-    record_date: str
-    record_start_time: str
-    record_end_time: str
-    record_timedelta: str
-    record_n_files: int
-    record_n_seconds: int
-    record_n_samples: int
-    type: str
-
-
-@dataclass
-class ECGEvent:
-    # start event
-    start_datetime: str
-    start_file_index: int
-    start_qrs_index: int
-    # end event
-    end_datetime: str
-    end_file_index: int
-    end_qrs_index: int
-    # duration
-    af_duration: int
-    nsr_duration: int
-
-
-@dataclass
-class RREvent:
-    # start event
-    start_file_index: int
-    start_rr_index: int
-    # end event
-    end_file_index: int
-    end_rr_index: int
