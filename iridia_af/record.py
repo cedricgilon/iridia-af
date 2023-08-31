@@ -67,6 +67,9 @@ class Record:
 
     def __read_rr_label(self) -> pd.DataFrame:
         rr_labels = sorted(self.record_folder.glob("*rr_labels.csv"))
+        if len(rr_labels) == 0:
+            return None
+        assert len(rr_labels) == 1
         df_rr_labels = pd.read_csv(rr_labels[0])
         return df_rr_labels
 
@@ -74,12 +77,16 @@ class Record:
         self.rr_labels_df = self.__read_rr_label()
         len_rr = [len(rr) for rr in self.rr]
 
+        labels = [np.zeros(len_day_rr) for len_day_rr in len_rr]
+
+        if self.rr_labels_df is None:
+            self.rr_labels = labels
+            return
+
         start_day = self.rr_labels_df["start_file_index"].unique()
         end_day = self.rr_labels_df["end_file_index"].unique()
         days = np.unique(np.concatenate([start_day, end_day]))
         assert len(days) <= len(len_rr)
-
-        labels = [np.zeros(len_day_rr) for len_day_rr in len_rr]
 
         for i, row in self.rr_labels_df.iterrows():
             rr_event = RREvent(**row)
