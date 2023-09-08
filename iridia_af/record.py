@@ -42,27 +42,18 @@ class Record:
         self.rr = [self.__read_rr_file(rr_file) for rr_file in self.rr_files]
         self.__create_rr_labels()
 
-    def __read_rr_file(self, rr_file: Path, clean_rr=True) -> np.ndarray:
+    def __read_rr_file(self, rr_file: Path, clean_rr=False) -> np.ndarray:
         with h5py.File(rr_file, "r") as f:
             rr = f["rr"][:]
         if clean_rr:
             rr = self.__clean_rr(rr)
         return rr
 
-    def __clean_rr(self, rr_list, remove_invalid=True, low_rr=200, high_rr=4000, interpolation_method="linear",
-                   remove_ecto=True) -> np.ndarray:
-
+    def __clean_rr(self, rr_list, remove_invalid=True, low_rr=200, high_rr=4000,
+                   interpolation_method="linear") -> np.ndarray:
         if remove_invalid:
             rr_list = [rr if high_rr >= rr >= low_rr else np.nan for rr in rr_list]
             rr_list = pd.Series(rr_list).interpolate(method=interpolation_method).tolist()
-        if remove_ecto:
-            rr_list = hrv.remove_ectopic_beats(rr_list,
-                                               method='custom',
-                                               custom_removing_rule=0.3,
-                                               verbose=False)
-            rr_list = pd.Series(rr_list) \
-                .interpolate(method=interpolation_method) \
-                .interpolate(limit_direction='both').tolist()
         return np.array(rr_list)
 
     def __read_rr_label(self) -> pd.DataFrame:
