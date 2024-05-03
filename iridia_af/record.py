@@ -9,6 +9,7 @@ from pathlib import Path
 from .record_dto import RecordMetadata, RREvent
 
 
+
 def create_record(record_id, metadata_df, record_path):
     metadata_record = (metadata_df[metadata_df["record_id"] == record_id])
     assert len(metadata_record) == 1
@@ -38,8 +39,8 @@ class Record:
         self.ecg_labels_df = None
         self.ecg_labels = None
 
-    def load_rr(self):
-        self.rr = [self.__read_rr_file(rr_file) for rr_file in self.rr_files]
+    def load_rr(self, clean_rr=False):
+        self.rr = [self.__read_rr_file(rr_file, clean_rr) for rr_file in self.rr_files]
         self.__create_rr_labels()
 
     def __read_rr_file(self, rr_file: Path, clean_rr=False) -> np.ndarray:
@@ -91,11 +92,11 @@ class Record:
                         labels[day][:] = 1
         self.rr_labels = labels
 
-    def plot_rr(self, has_day_ticks=True, has_abnormal_color=False):
+    def plot_rr(self, has_day_ticks=True, has_abnormal_color=False, xlim=None):
         all_rr = np.concatenate(self.rr)
         all_rr_labels = np.concatenate(self.rr_labels)
 
-        fig, ax = plt.subplots(2, 1, figsize=(10, 8), sharex=True)
+        fig, ax = plt.subplots(2, 1, figsize=(10, 8), sharex=True, dpi=300)
 
         ax[0].plot(all_rr)
         ax[0].set_ylabel("RR (ms)")
@@ -130,6 +131,9 @@ class Record:
                 ax[0].axvspan(start, end, alpha=0.3, color="red")
                 ax[1].axvspan(start, end, alpha=0.3, color="red")
 
+        if xlim is not None:
+            plt.xlim(xlim)
+
         plt.show()
 
     def load_ecg(self, clean_front=False):
@@ -148,6 +152,8 @@ class Record:
 
     def read_ecg_labels(self) -> pd.DataFrame:
         ecg_labels = sorted(self.record_folder.glob("*ecg_labels.csv"))
+        if len(ecg_labels) == 0:
+            return None
         assert len(ecg_labels) == 1
         self.ecg_labels_df = pd.read_csv(ecg_labels[0])
 
@@ -155,12 +161,16 @@ class Record:
         self.read_ecg_labels()
         len_ecg = [len(ecg) for ecg in self.ecg]
 
+        labels = [np.zeros(len_day_ecg) for len_day_ecg in len_ecg]
+
+        if self.ecg_labels_df is None:
+            self.ecg_labels = labels
+            return
+
         start_day = self.ecg_labels_df["start_file_index"].unique()
         end_day = self.ecg_labels_df["end_file_index"].unique()
         days = np.unique(np.concatenate([start_day, end_day]))
         assert len(days) <= len(len_ecg)
-
-        labels = [np.zeros(len_day_ecg) for len_day_ecg in len_ecg]
 
         for i, row in self.ecg_labels_df.iterrows():
             if row.start_file_index == row.end_file_index:
@@ -173,27 +183,26 @@ class Record:
                         labels[day][:] = 1
         self.ecg_labels = labels
 
-    def plot_ecg(self, has_day_ticks=True):
+    def plot_ecg(self, plot_path=None, has_day_ticks=True, has_xticks_hours=True, custom_size=(12, 8)):
         all_ecg = np.concatenate(self.ecg)
         all_ecg_labels = np.concatenate(self.ecg_labels)
 
         # set font size
         plt.rcParams.update({"font.size": 18})
 
-        fig, ax = plt.subplots(3, 1, figsize=(10, 8), sharex=True)
+        fig, ax = plt.subplots(3, 1, figsize=custom_size, sharex=True, dpi=300)
 
         ax[0].plot(all_ecg[:, 0])
-        ax[0].set_ylabel("ECG I (mV)")
+        ax[0].set_ylabel("ECG\nLead I (mV)")
 
         ax[1].plot(all_ecg[:, 1])
-        ax[1].set_ylabel("ECG II (mV)")
+        ax[1].set_ylabel("ECG\nLead II (mV)")
 
         ax[2].plot(all_ecg_labels)
         ax[2].set_ylim(-0.1, 1.1)
         ax[2].set_yticks([0, 1])
         ax[2].set_yticklabels(["NSR", "AF"])
-        ax[2].set_xlabel("ECG index", labelpad=10)
-        ax[2].set_ylabel("Label")
+        ax[2].set_ylabel("Annotation")
 
         if has_day_ticks:
             # add vertical lines at the end of each day
@@ -205,7 +214,24 @@ class Record:
                 ax[1].axvline(i, color="k", linestyle="--", alpha=0.5)
                 ax[2].axvline(i, color="k", linestyle="--", alpha=0.5)
 
-        plt.show()
+        if has_xticks_hours:
+            # add xticks every hour
+            step = 2 * 60 * 60 * 200
+            xticks = np.arange(0, len(all_ecg) + step, step)
+            xticklabels = np.arange(0, len(all_ecg) + step, step)
+            xticklabels = xticklabels / 200 / 60 / 60
+            xticklabels = xticklabels.astype(int)
+            ax[2].set_xticks(xticks)
+            ax[2].set_xticklabels(xticklabels)
+            ax[2].set_xlabel("Time (h)", labelpad=10)
+        else:
+            ax[2].set_xlabel("ECG index", labelpad=10)
+
+        if plot_path is not None:
+            plt.savefig(plot_path)#, bbox_inches="tight")
+            plt.close()
+        else:
+            plt.show()
 
     def number_of_episodes(self):
         rr_labels = sorted(self.record_folder.glob("*rr_labels.csv"))
