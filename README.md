@@ -23,3 +23,7 @@ AF episodes were manually annotated and reviewed by an expert cardiologist and a
 Records last from 19 hours up to 95 hours, divided into 24-hour files.
 In total, it represents 24 million seconds of annotated Holter monitoring, sampled at 200 Hz.
 This dataset aims at expanding the available options for researchers and offers a valuable resource for advancing ML and DL use in the field of cardiac arrhythmia diagnosis.
+
+## Data
+
+The data is available on Zenodo: https://zenodo.org/records/8405941.
